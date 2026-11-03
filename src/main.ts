@@ -2,7 +2,6 @@ import * as monaco from 'monaco-editor/esm/vs/editor/editor.api'
 import 'monaco-editor/esm/vs/basic-languages/php/php.contribution'
 import 'monaco-editor/min/vs/editor/editor.main.css'
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
-import { compilePhp, makeRoot, runPhp, writeFile, type Directory } from './php/engine'
 
 self.MonacoEnvironment = {
   getWorker() {
@@ -43,58 +42,61 @@ const editor = monaco.editor.create(document.querySelector<HTMLElement>('#editor
   hideCursorInOverviewRuler: true,
 })
 
-editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => { void run() })
+const php = new Worker(new URL('./php/worker.ts', import.meta.url), { type: 'module' })
+let nextId = 1
+let running = false
+
+php.onmessage = (event: MessageEvent<{ type?: string; id?: number; text?: string; stdout?: string; stderr?: string; error?: string; ms?: number }>) => {
+  const data = event.data
+  if (data.type === 'status') {
+    status.textContent = data.text ?? ''
+    return
+  }
+  if (data.type === 'reset') {
+    status.textContent = 'Filesystem reset'
+    return
+  }
+  if (data.type !== 'result') return
+  running = false
+  runButton.disabled = false
+  if (data.error) {
+    out.textContent = data.error
+    status.textContent = ''
+    return
+  }
+  out.replaceChildren()
+  out.append(data.stdout || '(no output)')
+  if (data.stderr?.trim()) {
+    const err = document.createElement('div')
+    err.className = 'err'
+    err.textContent = `\n${data.stderr.trim()}`
+    out.append(err)
+  }
+  status.textContent = data.ms == null ? '' : `${data.ms} ms`
+}
+
+php.onerror = (event) => {
+  running = false
+  runButton.disabled = false
+  out.textContent = event.message || 'p8 failed'
+  status.textContent = ''
+}
+
+function run() {
+  if (running) return
+  running = true
+  runButton.disabled = true
+  php.postMessage({ type: 'run', id: nextId++, code: editor.getValue() })
+}
+
+editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, run)
 editor.onDidChangeModelContent(() => {
   localStorage.setItem(storageKey, editor.getValue())
 })
 
-let module: WebAssembly.Module | null = null
-let root: Directory = makeRoot()
-let running = false
-
-async function php(): Promise<WebAssembly.Module> {
-  if (!module) {
-    status.textContent = 'Loading p8…'
-    module = await compilePhp('/php2.wasm')
-    status.textContent = ''
-  }
-  return module
-}
-
-async function run() {
-  if (running) return
-  running = true
-  runButton.disabled = true
-  const started = performance.now()
-  try {
-    const compiled = await php()
-    const source = editor.getValue()
-    const code = source.includes('<?') ? source : `<?php\n${source}`
-    writeFile(root, '/tmp/play.php', new TextEncoder().encode(code))
-    const result = runPhp(compiled, ['php2', '-d', 'display_errors=1', '-d', 'html_errors=0', '-d', 'date.timezone=UTC', '/tmp/play.php'], root)
-    const stdout = new TextDecoder().decode(result.stdout)
-    out.replaceChildren()
-    out.append(stdout || '(no output)')
-    if (result.stderr.trim()) {
-      const err = document.createElement('div')
-      err.className = 'err'
-      err.textContent = `\n${result.stderr.trim()}`
-      out.append(err)
-    }
-    status.textContent = `${Math.round(performance.now() - started)} ms`
-  } catch (error) {
-    out.textContent = error instanceof Error ? error.message : String(error)
-    status.textContent = ''
-  } finally {
-    running = false
-    runButton.disabled = false
-  }
-}
-
-runButton.addEventListener('click', () => { void run() })
+runButton.addEventListener('click', run)
 resetButton.addEventListener('click', () => {
-  root = makeRoot()
-  status.textContent = 'Filesystem reset'
+  php.postMessage({ type: 'reset' })
 })
 
-void php().then(() => run())
+run()
