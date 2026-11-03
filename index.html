@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>p8</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="bar">
+        <strong>p8</strong>
+        <span class="meta">PHP 8.4</span>
+        <span class="spacer"></span>
+        <span id="status" class="meta"></span>
+        <button id="reset" type="button">Reset</button>
+        <button id="run" type="button">Run</button>
+      </header>
+      <div class="split">
+        <section class="pane editor" id="editor"></section>
+        <section class="pane">
+          <pre id="out" class="out">Run some PHP.</pre>
+        </section>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
