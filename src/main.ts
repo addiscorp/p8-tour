@@ -32,7 +32,8 @@ function escapeHtml(value: string) {
 
 function show(stdout: string, stderr = '') {
   const err = stderr.trim() ? `<div style="color:#ffb4a8">${escapeHtml(stderr.trim())}</div>` : ''
-  out.srcdoc = `<!doctype html><meta charset="utf-8"><style>html,body{margin:0;background:#12130f;color:#f3f1ea;font:13px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace}body{padding:16px;white-space:pre-wrap;word-break:break-word}</style>${stdout}${err}`
+  const policy = "default-src 'none'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; media-src data: blob:; base-uri 'none'; form-action 'none'"
+  out.srcdoc = `<!doctype html><meta http-equiv="Content-Security-Policy" content="${policy}"><meta charset="utf-8"><style>html,body{margin:0;background:#12130f;color:#f3f1ea;font:13px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace}body{padding:16px;white-space:pre-wrap;word-break:break-word}</style>${stdout}${err}`
 }
 
 show('Run some PHP.')
