@@ -10,20 +10,32 @@ self.MonacoEnvironment = {
 }
 
 const sample = `<?php
+echo "Hello from PHP " . phpversion();
+echo "<br>";
 
-echo 'p8 ', PHP_VERSION, "\\n\\n";
+// WordPress is available if you need it!
+require '/wordpress/wp-load.php';
 
-$pdo = new PDO('sqlite:/tmp/demo.db');
-$pdo->exec('create table if not exists notes (id integer primary key, body text)');
-$pdo->exec("insert into notes (body) values ('stored with Turso')");
+echo "WordPress " . wp_get_wp_version() . "<br>";
 
-foreach ($pdo->query('select id, body from notes') as $row) {
-    echo $row['id'], '  ', $row['body'], "\\n";
-}
+$html_processor = WP_HTML_Processor::create_fragment('<p><span>Hey!</span></p>');
+$html_processor->next_tag();
+var_dump($html_processor->get_tag());
 `
 
-const storageKey = 'p8-tour-code'
-const out = document.querySelector<HTMLPreElement>('#out')!
+const storageKey = 'p8-tour-code-wp'
+const out = document.querySelector<HTMLIFrameElement>('#out')!
+
+function escapeHtml(value: string) {
+  return value.replace(/[&<>]/g, (char) => char === '&' ? '&amp;' : char === '<' ? '&lt;' : '&gt;')
+}
+
+function show(stdout: string, stderr = '') {
+  const err = stderr.trim() ? `<div style="color:#ffb4a8">${escapeHtml(stderr.trim())}</div>` : ''
+  out.srcdoc = `<!doctype html><meta charset="utf-8"><style>html,body{margin:0;background:#12130f;color:#f3f1ea;font:13px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace}body{padding:16px;white-space:pre-wrap;word-break:break-word}</style>${stdout}${err}`
+}
+
+show('Run some PHP.')
 const status = document.querySelector<HTMLSpanElement>('#status')!
 const runButton = document.querySelector<HTMLButtonElement>('#run')!
 const resetButton = document.querySelector<HTMLButtonElement>('#reset')!
@@ -60,25 +72,18 @@ php.onmessage = (event: MessageEvent<{ type?: string; id?: number; text?: string
   running = false
   runButton.disabled = false
   if (data.error) {
-    out.textContent = data.error
+    show(escapeHtml(data.error))
     status.textContent = ''
     return
   }
-  out.replaceChildren()
-  out.append(data.stdout || '(no output)')
-  if (data.stderr?.trim()) {
-    const err = document.createElement('div')
-    err.className = 'err'
-    err.textContent = `\n${data.stderr.trim()}`
-    out.append(err)
-  }
+  show(data.stdout || '(no output)', data.stderr)
   status.textContent = data.ms == null ? '' : `${data.ms} ms`
 }
 
 php.onerror = (event) => {
   running = false
   runButton.disabled = false
-  out.textContent = event.message || 'p8 failed'
+  show(escapeHtml(event.message || 'p8 failed'))
   status.textContent = ''
 }
 

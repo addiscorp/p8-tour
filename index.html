@@ -4,12 +4,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>p8</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
     <div class="app">
       <header class="bar">
-        <strong>p8</strong>
+        <div class="brand"><img src="/favicon.svg" alt="" width="22" height="22" /><strong>p8</strong></div>
         <span class="meta">PHP 8.4</span>
         <span class="spacer"></span>
         <span id="status" class="meta"></span>
@@ -19,7 +20,7 @@
       <div class="split">
         <section class="pane editor" id="editor"></section>
         <section class="pane">
-          <pre id="out" class="out">Run some PHP.</pre>
+          <iframe id="out" class="out" sandbox title="PHP output"></iframe>
         </section>
       </div>
     </div>

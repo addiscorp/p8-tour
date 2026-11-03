@@ -33,6 +33,8 @@ body {
   border-bottom: 1px solid var(--line);
 }
 
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand img { width: 22px; height: 22px; display: block; }
 .bar strong { font-size: 15px; letter-spacing: -0.03em; }
 
 .meta { color: var(--muted); font-size: 12px; }
@@ -74,16 +76,12 @@ button:hover { border-color: #4a5044; }
 .editor { min-height: 0; }
 
 .out {
-  margin: 0;
   flex: 1;
-  overflow: auto;
-  padding: 16px;
-  font: 13px/1.55 ui-monospace, "SF Mono", Menlo, monospace;
-  white-space: pre-wrap;
-  word-break: break-word;
+  width: 100%;
+  min-height: 0;
+  border: 0;
+  background: transparent;
 }
-
-.out .err { color: var(--err); }
 
 @media (max-width: 800px) {
   .split { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }

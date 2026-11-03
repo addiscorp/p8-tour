@@ -4,6 +4,8 @@ A PHP repl in the browser. The page runs `php2.wasm` (PHP 8.4, wasm32-wasip1) on
 
 The editor is half the window and the output is the other half. Below 800px they stack.
 
+WordPress is already mounted at `/wordpress`, so `require '/wordpress/wp-load.php'` works.
+
 ## Cloudflare
 
 Worker name: `p8-tour`

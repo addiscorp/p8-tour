@@ -1,2 +1,4 @@
 /php2.wasm
   Cache-Control: public, max-age=31536000, immutable
+/wp/*
+  Cache-Control: public, max-age=31536000, immutable
